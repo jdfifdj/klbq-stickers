@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>卡拉彼丘贴纸生成器 - 网页版</title>
+    <link rel="stylesheet" href="./css/index.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>卡拉彼丘-贴纸生成器</h1>
+            <p class="subtitle">将文字叠加到图片上，创建属于你的卡拉彼丘表情包风格贴纸</p>
+        </header>
+        
+        <div class="app-container">
+            <!-- 左侧：图片选择和预览 -->
+            <div class="left-panel">
+                <div class="control-group">
+                    <h3>自己上传图片</h3>
+                    <input type="file" id="imageUpload" accept="image/*">
+                    
+                    <h4 style="margin-top: 20px; margin-bottom: 10px;">或选择预设角色</h4>
+                    <select id="characterSelect" style="margin-bottom: 10px;">
+                        <option value="">请选择角色</option>
+                        <option value="令">令</option>
+                        <option value="伊薇特">伊薇特</option>
+                        <option value="信">信</option>
+                        <option value="加拉蒂亚">加拉蒂亚</option>
+                        <option value="千代">千代</option>
+                        <option value="奥黛丽">奥黛丽</option>
+                        <option value="心夏">心夏</option>
+                        <option value="忧雾">忧雾</option>
+                        <option value="拉薇">拉薇</option>
+                        <option value="明">明</option>
+                        <option value="星绘">星绘</option>
+                        <option value="梅瑞狄斯">梅瑞狄斯</option>
+                        <option value="玛德蕾娜">玛德蕾娜</option>
+                        <option value="玛拉">玛拉</option>
+                        <option value="珐格兰丝">珐格兰丝</option>
+                        <option value="白墨">白墨</option>
+                        <option value="米雪儿">米雪儿</option>
+                        <option value="绯莎">绯莎</option>
+                        <option value="艾卡">艾卡</option>
+                        <option value="芙拉薇娅">芙拉薇娅</option>
+                        <option value="蕾欧娜">蕾欧娜</option>
+                        <option value="香奈美">香奈美</option>
+                    </select>
+                    
+                    <div id="characterImages" style="display: none; margin-top: 15px;">
+                        <h5 style="margin-bottom: 10px;">选择图片</h5>
+                        <div id="imageGallery" class="template-gallery"></div>
+                    </div>
+                </div>
+                
+                <div class="preview-panel">
+                    <div class="preview-container">
+                        <canvas id="stickerCanvas"></canvas>
+                    </div>
+                    <p>预览区域 - 实时显示贴纸效果</p>
+                </div>
+            </div>
+            
+            <!-- 右侧：文字样式和位置控制 -->
+            <div class="right-panel">
+                <div class="control-group">
+                    <h3>文字内容</h3>
+                    <textarea id="textInput" placeholder="输入要添加到图片上的文字...">喵拉喵丘</textarea>
+                </div>
+                
+                <div class="control-group">
+                    <h3>文字样式</h3>
+                    <label for="fontFamily">字体</label>
+                    <select id="fontFamily">
+                        <option value="stick">Stick</option>
+                        <option value="stick2">Stick2</option>
+                    </select>
+                    
+                    <label for="fontSize">字体大小</label>
+                    <input type="range" id="fontSize" min="10" max="100" value="40">
+                    <span id="fontSizeValue">40px</span>
+                    
+                    <div class="color-controls">
+                        <div class="color-control">
+                            <label for="textColor">文字颜色</label>
+                            <input type="color" id="textColor" value="#ffffff">
+                        </div>
+                        <div class="color-control">
+                            <label for="strokeColor">描边颜色</label>
+                            <input type="color" id="strokeColor" value="#000000">
+                        </div>
+                    </div>
+                    
+                    <label for="strokeWidth">描边宽度</label>
+                    <input type="range" id="strokeWidth" min="0" max="10" value="2">
+                    <span id="strokeWidthValue">2px</span>
+                </div>
+                
+                <div class="control-group">
+                    <h3>文字位置</h3>
+                    <label for="textX">水平位置</label>
+                    <input type="range" id="textX" min="0" max="100" value="50">
+                    <span id="textXValue">50%</span>
+                    
+                    <label for="textY">垂直位置</label>
+                    <input type="range" id="textY" min="0" max="100" value="50">
+                    <span id="textYValue">50%</span>
+                    
+                    <label for="textRotation">旋转角度</label>
+                    <input type="range" id="textRotation" min="-180" max="180" value="0">
+                    <span id="textRotationValue">0°</span>
+                </div>
+                
+                <div class="button-group">
+                    <button id="resetBtn">重置设置</button>
+                    <button id="downloadBtn">下载贴纸</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h2>使用说明</h2>
+            <ol>
+                <li>上传图片或选择预设模板作为贴纸背景</li>
+                <li>在文本框中输入要添加到图片上的文字</li>
+                <li>调整字体、大小、颜色、位置等样式参数</li>
+                <li>预览效果满意后，点击"下载贴纸"保存图片</li>
+                <li>使用重置按钮可以恢复默认设置</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const canvas = document.getElementById('stickerCanvas');
+        const ctx = canvas.getContext('2d');
+        const imageUpload = document.getElementById('imageUpload');
+        const textInput = document.getElementById('textInput');
+        const fontFamily = document.getElementById('fontFamily');
+        const fontSize = document.getElementById('fontSize');
+        const fontSizeValue = document.getElementById('fontSizeValue');
+        const textColor = document.getElementById('textColor');
+        const strokeColor = document.getElementById('strokeColor');
+        const strokeWidth = document.getElementById('strokeWidth');
+        const strokeWidthValue = document.getElementById('strokeWidthValue');
+        const textX = document.getElementById('textX');
+        const textXValue = document.getElementById('textXValue');
+        const textY = document.getElementById('textY');
+        const textYValue = document.getElementById('textYValue');
+        const textRotation = document.getElementById('textRotation');
+        const textRotationValue = document.getElementById('textRotationValue');
+        const resetBtn = document.getElementById('resetBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const templateItems = document.querySelectorAll('.template-item');
+        
+        // 初始化变量
+        let currentImage = null;
+        let currentTemplate = 'template1';
+        
+        // 设置Canvas尺寸
+        function setCanvasSize() {
+            const container = document.querySelector('.preview-container');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            renderSticker();
+        }
+        
+        // 渲染贴纸
+        function renderSticker() {
+            // 清除Canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制背景
+            if (currentImage) {
+                // 计算图片在Canvas中的尺寸和位置，保持宽高比
+                const imgRatio = currentImage.width / currentImage.height;
+                const canvasRatio = canvas.width / canvas.height;
+                
+                let drawWidth, drawHeight, offsetX, offsetY;
+                
+                if (imgRatio > canvasRatio) {
+                    drawWidth = canvas.width;
+                    drawHeight = canvas.width / imgRatio;
+                    offsetX = 0;
+                    offsetY = (canvas.height - drawHeight) / 2;
+                } else {
+                    drawHeight = canvas.height;
+                    drawWidth = canvas.height * imgRatio;
+                    offsetX = (canvas.width - drawWidth) / 2;
+                    offsetY = 0;
+                }
+                
+                ctx.drawImage(currentImage, offsetX, offsetY, drawWidth, drawHeight);
+            } else {
+                // 如果没有图片，保持画布透明
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('请选择图片', canvas.width / 2, canvas.height / 2);
+            }
+            
+            // 绘制文字
+            const text = textInput.value;
+            if (text) {
+                // 设置文字样式
+                ctx.font = `${fontSize.value}px ${fontFamily.value}`;
+                ctx.fillStyle = textColor.value;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // 计算文字位置
+                const x = (canvas.width * textX.value) / 100;
+                const y = (canvas.height * textY.value) / 100;
+                
+                // 保存当前状态
+                ctx.save();
+                
+                // 应用旋转
+                ctx.translate(x, y);
+                ctx.rotate((textRotation.value * Math.PI) / 180);
+                
+                // 绘制描边
+                if (strokeWidth.value > 0) {
+                    ctx.strokeStyle = strokeColor.value;
+                    ctx.lineWidth = parseInt(strokeWidth.value);
+                    ctx.strokeText(text, 0, 0);
+                }
+                
+                // 绘制填充文字
+                ctx.fillText(text, 0, 0);
+                
+                // 恢复状态
+                ctx.restore();
+            }
+        }
+        
+        // 事件监听器
+        imageUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = function() {
+                        currentImage = img;
+                        renderSticker();
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // 角色选择事件
+        const characterSelect = document.getElementById('characterSelect');
+        const characterImages = document.getElementById('characterImages');
+        const imageGallery = document.getElementById('imageGallery');
+        
+        // 不需要预定义图片数量，改为动态检测
+        
+        characterSelect.addEventListener('change', function() {
+            const character = this.value;
+            if (character) {
+                // 显示图片选择区域
+                characterImages.style.display = 'block';
+                // 清空图片画廊
+                imageGallery.innerHTML = '';
+                
+                // 显示加载中状态
+                imageGallery.innerHTML = '<div style="text-align: center; padding: 20px;">加载中...</div>';
+                
+                setTimeout(() => {
+                    // 清空加载状态
+                    imageGallery.innerHTML = '';
+                    
+                    // 动态检测图片数量的函数
+                    const detectImages = async () => {
+                        let loadedImages = 0;
+                        let failedAttempts = 0;
+                        const maxConsecutiveFailures = 3; // 连续失败3次后停止尝试
+                        let i = 1;
+                        
+                        while (failedAttempts < maxConsecutiveFailures) {
+                            // 尝试加载不同格式的图片
+                            const formats = ['png', 'jpg', 'jpeg'];
+                            let imageLoaded = false;
+                            
+                            for (const format of formats) {
+                                const imgPath = `img/${character}/${String(i).padStart(2, '0')}.${format}`;
+                                
+                                // 使用Promise封装图片加载
+                                const loadResult = await new Promise(resolve => {
+                                    const img = new Image();
+                                    img.onload = () => resolve({ success: true, path: imgPath });
+                                    img.onerror = () => resolve({ success: false });
+                                    img.src = imgPath;
+                                });
+                                
+                                if (loadResult.success) {
+                                    // 图片加载成功，创建预览项
+                                    const imgItem = document.createElement('div');
+                                    imgItem.className = 'template-item';
+                                    imgItem.setAttribute('data-img', loadResult.path);
+                                    
+                                    const img = document.createElement('img');
+                                    img.src = loadResult.path;
+                                    img.alt = `${character} - 图片${i}`;
+                                    imgItem.appendChild(img);
+                                    
+                                    // 添加点击事件
+                                    imgItem.addEventListener('click', function() {
+                                        // 移除所有活跃状态
+                                        document.querySelectorAll('.template-item.active').forEach(item => {
+                                            item.classList.remove('active');
+                                        });
+                                        // 添加当前活跃状态
+                                        this.classList.add('active');
+                                        
+                                        const imgSrc = this.getAttribute('data-img');
+                                        const selectedImg = new Image();
+                                        selectedImg.crossOrigin = 'anonymous';
+                                        selectedImg.onload = function() {
+                                            currentImage = selectedImg;
+                                            renderSticker();
+                                        };
+                                        selectedImg.onerror = function() {
+                                            alert('图片加载失败，请重试');
+                                        };
+                                        selectedImg.src = imgSrc;
+                                    });
+                                    
+                                    imageGallery.appendChild(imgItem);
+                                    loadedImages++;
+                                    imageLoaded = true;
+                                    failedAttempts = 0; // 重置失败计数
+                                    break;
+                                }
+                            }
+                            
+                            if (!imageLoaded) {
+                                failedAttempts++;
+                            }
+                            
+                            i++;
+                        }
+                        
+                        // 如果没有图片加载成功，显示提示信息
+                        if (loadedImages === 0) {
+                            imageGallery.innerHTML = '<div style="text-align: center; padding: 20px; color: #ff9800;">该角色暂无可用图片</div>';
+                        }
+                    };
+                    
+                    // 开始检测图片
+                    detectImages();
+                }, 100); // 短暂延迟让用户感知加载过程
+            } else {
+                characterImages.style.display = 'none';
+            }
+        });
+        
+        // 文字样式控制
+        textInput.addEventListener('input', renderSticker);
+        fontFamily.addEventListener('change', renderSticker);
+        
+        fontSize.addEventListener('input', function() {
+            fontSizeValue.textContent = `${this.value}px`;
+            renderSticker();
+        });
+        
+        textColor.addEventListener('input', renderSticker);
+        strokeColor.addEventListener('input', renderSticker);
+        
+        strokeWidth.addEventListener('input', function() {
+            strokeWidthValue.textContent = `${this.value}px`;
+            renderSticker();
+        });
+        
+        // 文字位置控制
+        textX.addEventListener('input', function() {
+            textXValue.textContent = `${this.value}%`;
+            renderSticker();
+        });
+        
+        textY.addEventListener('input', function() {
+            textYValue.textContent = `${this.value}%`;
+            renderSticker();
+        });
+        
+        textRotation.addEventListener('input', function() {
+            textRotationValue.textContent = `${this.value}°`;
+            renderSticker();
+        });
+        
+        // 重置按钮
+        resetBtn.addEventListener('click', function() {
+            textInput.value = '喵拉喵丘';
+            fontFamily.value = 'Arial';
+            fontSize.value = 40;
+            fontSizeValue.textContent = '40px';
+            textColor.value = '#ffffff';
+            strokeColor.value = '#000000';
+            strokeWidth.value = 2;
+            strokeWidthValue.textContent = '2px';
+            textX.value = 50;
+            textXValue.textContent = '50%';
+            textY.value = 50;
+            textYValue.textContent = '50%';
+            textRotation.value = 0;
+            textRotationValue.textContent = '0°';
+            renderSticker();
+        });
+        
+        // 下载按钮
+        downloadBtn.addEventListener('click', function() {
+            const link = document.createElement('a');
+            link.download = '卡拉彼丘-表情包贴纸.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+        
+        // 初始化
+        window.addEventListener('load', function() {
+            setCanvasSize();
+            
+            // 不加载默认模板，让用户自行选择
+        });
+        
+        // 响应窗口大小变化
+        window.addEventListener('resize', setCanvasSize);
+    </script>
+</body>
+</html>
