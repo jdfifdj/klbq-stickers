@@ -10,7 +10,7 @@
     <div class="container">
         <header>
             <h1>卡拉彼丘-贴纸生成器</h1>
-            <p class="subtitle">将文字叠加到图片上，创建属于你的卡拉彼丘表情包风格贴纸</p>
+            <p class="subtitle">将文字叠加到图片上，创建属于你的卡拉彼丘表情包风格贴纸</br>V0.3</p>
         </header>
         
         <div class="app-container">
@@ -242,7 +242,7 @@
                 const reader = new FileReader();
                 reader.onload = function(event) {
                     const img = new Image();
-                    img.crossOrigin = 'anonymous';
+                    // 移除crossOrigin设置以避免本地文件系统的CORS问题
                     img.onload = function() {
                         currentImage = img;
                         renderSticker();
@@ -320,7 +320,7 @@
                                         
                                         const imgSrc = this.getAttribute('data-img');
                                         const selectedImg = new Image();
-                                        selectedImg.crossOrigin = 'anonymous';
+                                        // 移除crossOrigin设置以避免本地文件系统的CORS问题
                                         selectedImg.onload = function() {
                                             currentImage = selectedImg;
                                             renderSticker();
@@ -414,10 +414,62 @@
         
         // 下载按钮
         downloadBtn.addEventListener('click', function() {
-            const link = document.createElement('a');
-            link.download = '卡拉彼丘-表情包贴纸.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
+            try {
+                // 尝试使用toDataURL (在HTTP服务器环境下工作)
+                const dataUrl = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = '卡拉彼丘-表情包贴纸.png';
+                link.href = dataUrl;
+                link.click();
+            } catch (error) {
+                // 如果toDataURL失败（本地文件系统环境），使用替代方案
+                console.log('使用替代下载方法...');
+                
+                // 创建一个新的canvas用于下载
+                const downloadCanvas = document.createElement('canvas');
+                downloadCanvas.width = canvas.width;
+                downloadCanvas.height = canvas.height;
+                const downloadCtx = downloadCanvas.getContext('2d');
+                
+                // 绘制白色背景
+                downloadCtx.fillStyle = '#ffffff';
+                downloadCtx.fillRect(0, 0, downloadCanvas.width, downloadCanvas.height);
+                
+                // 直接绘制文本，避免使用可能被污染的图像
+                const text = textInput.value;
+                downloadCtx.font = `${fontSize.value}px ${fontFamily.value}`;
+                downloadCtx.fillStyle = textColor.value;
+                downloadCtx.textAlign = 'center';
+                downloadCtx.textBaseline = 'middle';
+                
+                const x = (downloadCanvas.width * textX.value) / 100;
+                const y = (downloadCanvas.height * textY.value) / 100;
+                
+                downloadCtx.save();
+                downloadCtx.translate(x, y);
+                downloadCtx.rotate((textRotation.value * Math.PI) / 180);
+                
+                if (strokeWidth.value > 0) {
+                    downloadCtx.strokeStyle = strokeColor.value;
+                    downloadCtx.lineWidth = parseInt(strokeWidth.value);
+                    downloadCtx.strokeText(text, 0, 0);
+                }
+                
+                downloadCtx.fillText(text, 0, 0);
+                downloadCtx.restore();
+                
+                // 尝试下载纯文本贴纸
+                try {
+                    const dataUrl = downloadCanvas.toDataURL('image/png');
+                    const link = document.createElement('a');
+                    link.download = '卡拉彼丘-文字贴纸.png';
+                    link.href = dataUrl;
+                    link.click();
+                    alert('由于浏览器安全限制，仅能下载文字部分。建议通过HTTP服务器访问本应用以获得完整功能。');
+                } catch (innerError) {
+                    alert('下载失败，请尝试通过HTTP服务器访问本应用。可以使用命令: python -m http.server 8000');
+                }
+            }
         });
         
         // 初始化
