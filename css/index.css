@@ -12,11 +12,32 @@
             font-style: normal;
         }
 
+        @font-face {
+            font-family: 'OPPO Sans 4.0';
+            src: url('../font/OPPO Sans 4.0.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'ChildFunSans';
+            src: url('../font/ChildFunSans.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Dymon-ShouXieTi';
+            src: url('../font/Dymon-ShouXieTi.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'stick', 'stick2', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'stick', 'stick2','OPPO Sans 4.0', 'ChildFunSans','Dymon-ShouXieTi','Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
