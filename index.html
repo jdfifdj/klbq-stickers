@@ -10,7 +10,7 @@
     <div class="container">
         <header>
             <h1>卡拉彼丘-贴纸生成器</h1>
-            <p class="subtitle">将文字叠加到图片上，创建属于你的卡拉彼丘表情包风格贴纸</br>V0.4</p>
+            <p class="subtitle">将文字叠加到图片上，创建属于你的卡拉彼丘表情包风格贴纸</br>V0.5</p>
         </header>
         
         <div class="app-container">
@@ -114,6 +114,19 @@
                     <span id="textRotationValue">0°</span>
                 </div>
                 
+                <div class="control-group">
+                    <h3>图片旋转</h3>
+                    <label for="imageRotation">旋转角度</label>
+                    <input type="range" id="imageRotation" min="-180" max="180" value="0">
+                    <span id="imageRotationValue">0°</span>
+                    
+                    <div class="rotation-buttons">
+                        <button id="rotateLeftBtn" title="向左旋转90度">向左旋转90°</button>
+                        <button id="rotateRightBtn" title="向右旋转90度">向右旋转90°</button>
+                        <button id="resetImageRotationBtn" title="重置旋转">重置旋转</button>
+                    </div>
+                </div>
+                
                 <div class="button-group">
                     <button id="resetBtn">重置设置</button>
                     <button id="downloadBtn">下载贴纸</button>
@@ -165,10 +178,16 @@
         const resetBtn = document.getElementById('resetBtn');
         const downloadBtn = document.getElementById('downloadBtn');
         const templateItems = document.querySelectorAll('.template-item');
+        const imageRotationSlider = document.getElementById('imageRotation');
+        const imageRotationValue = document.getElementById('imageRotationValue');
+        const rotateLeftBtn = document.getElementById('rotateLeftBtn');
+        const rotateRightBtn = document.getElementById('rotateRightBtn');
+        const resetImageRotationBtn = document.getElementById('resetImageRotationBtn');
         
         // 初始化变量
         let currentImage = null;
         let currentTemplate = 'template1';
+        let imageRotation = 0; // 图片旋转角度
         
         // 设置Canvas尺寸
         function setCanvasSize() {
@@ -189,21 +208,42 @@
                 const imgRatio = currentImage.width / currentImage.height;
                 const canvasRatio = canvas.width / canvas.height;
                 
-                let drawWidth, drawHeight, offsetX, offsetY;
+                let drawWidth, drawHeight;
                 
-                if (imgRatio > canvasRatio) {
-                    drawWidth = canvas.width;
-                    drawHeight = canvas.width / imgRatio;
-                    offsetX = 0;
-                    offsetY = (canvas.height - drawHeight) / 2;
+                // 计算图片尺寸（考虑旋转后的显示需求）
+                if (Math.abs(imageRotation) === 90 || Math.abs(imageRotation) === 270) {
+                    // 旋转90度时，交换宽高比来计算
+                    const rotatedRatio = currentImage.height / currentImage.width;
+                    if (rotatedRatio > canvasRatio) {
+                        drawWidth = canvas.width;
+                        drawHeight = canvas.width / rotatedRatio;
+                    } else {
+                        drawHeight = canvas.height;
+                        drawWidth = canvas.height * rotatedRatio;
+                    }
                 } else {
-                    drawHeight = canvas.height;
-                    drawWidth = canvas.height * imgRatio;
-                    offsetX = (canvas.width - drawWidth) / 2;
-                    offsetY = 0;
+                    // 正常角度（0度或180度）
+                    if (imgRatio > canvasRatio) {
+                        drawWidth = canvas.width;
+                        drawHeight = canvas.width / imgRatio;
+                    } else {
+                        drawHeight = canvas.height;
+                        drawWidth = canvas.height * imgRatio;
+                    }
                 }
                 
-                ctx.drawImage(currentImage, offsetX, offsetY, drawWidth, drawHeight);
+                // 保存当前状态
+                ctx.save();
+                
+                // 移动到Canvas中心点进行旋转
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.rotate((imageRotation * Math.PI) / 180);
+                
+                // 在旋转后的坐标系中绘制图片
+                ctx.drawImage(currentImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+                
+                // 恢复状态
+                ctx.restore();
             } else {
                 // 如果没有图片，保持画布透明
                 
@@ -406,6 +446,40 @@
             renderSticker();
         });
         
+        // 图片旋转控制
+        imageRotationSlider.addEventListener('input', function() {
+            imageRotation = parseInt(this.value);
+            imageRotationValue.textContent = `${this.value}°`;
+            renderSticker();
+        });
+        
+        // 向左旋转90度按钮
+        rotateLeftBtn.addEventListener('click', function() {
+            imageRotation = (imageRotation - 90) % 360;
+            if (imageRotation < 0) imageRotation += 360; // 转换为正值
+            if (imageRotation > 180) imageRotation -= 360; // 保持在-180到180范围内
+            imageRotationSlider.value = imageRotation;
+            imageRotationValue.textContent = `${imageRotation}°`;
+            renderSticker();
+        });
+        
+        // 向右旋转90度按钮
+        rotateRightBtn.addEventListener('click', function() {
+            imageRotation = (imageRotation + 90) % 360;
+            if (imageRotation > 180) imageRotation -= 360; // 保持在-180到180范围内
+            imageRotationSlider.value = imageRotation;
+            imageRotationValue.textContent = `${imageRotation}°`;
+            renderSticker();
+        });
+        
+        // 重置图片旋转按钮
+        resetImageRotationBtn.addEventListener('click', function() {
+            imageRotation = 0;
+            imageRotationSlider.value = 0;
+            imageRotationValue.textContent = '0°';
+            renderSticker();
+        });
+        
         // 重置按钮
         resetBtn.addEventListener('click', function() {
             textInput.value = '喵拉喵丘';
@@ -422,6 +496,12 @@
             textYValue.textContent = '50%';
             textRotation.value = 0;
             textRotationValue.textContent = '0°';
+            
+            // 重置图片旋转
+            imageRotation = 0;
+            imageRotationSlider.value = 0;
+            imageRotationValue.textContent = '0°';
+            
             renderSticker();
         });
         
